@@ -1,0 +1,77 @@
+{
+	"FileVersion": 3,
+	"EngineAssociation": "5.8",
+	"Category": "",
+	"Description": "",
+	"Modules": [
+		{
+			"Name": "Ecliptor",
+			"Type": "Runtime",
+			"LoadingPhase": "Default",
+			"AdditionalDependencies": [
+				"Engine"
+			]
+		}
+	],
+	"Plugins": [
+		{
+			"Name": "ModelingToolsEditorMode",
+			"Enabled": true
+		},
+		{
+			"Name": "ModelContextProtocol",
+			"Enabled": true
+		},
+		{
+			"Name": "Terminal",
+			"Enabled": true
+		},
+		{
+			"Name": "EditorToolset",
+			"Enabled": true
+		},
+		{
+			"Name": "StreamlineNGXCommon",
+			"Enabled": false
+		},
+		{
+			"Name": "StreamlineCore",
+			"Enabled": false
+		},
+		{
+			"Name": "DLSS",
+			"Enabled": false
+		},
+		{
+			"Name": "StreamlineDLSSG",
+			"Enabled": false
+		},
+		{
+			"Name": "StreamlineReflex",
+			"Enabled": false
+		},
+		{
+			"Name": "NIS",
+			"Enabled": false
+		},
+		{
+			"Name": "Streamline",
+			"Enabled": false
+		},
+		{
+			"Name": "StreamlineDeepDVC",
+			"Enabled": false
+		},
+		{
+			"Name": "DLSSMoviePipelineSupport",
+			"Enabled": false
+		},
+		{
+			"Name": "VisualStudioTools",
+			"Enabled": false,
+			"SupportedTargetPlatforms": [
+				"Win64"
+			]
+		}
+	]
+}
