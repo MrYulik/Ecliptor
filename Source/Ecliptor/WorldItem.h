@@ -6,6 +6,7 @@
 #include "InteractionInterface.h"
 #include "Engine/DataTable.h"
 #include "GameFramework/Actor.h"
+#include "Sound/SoundWave.h"
 #include "WorldItem.generated.h"
 
 UCLASS(Abstract)
@@ -27,4 +28,7 @@ protected:
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Item")
 	TObjectPtr<UDataTable> ItemDatabase;
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Item")
+	TObjectPtr<USoundBase> PickupSound;
 };

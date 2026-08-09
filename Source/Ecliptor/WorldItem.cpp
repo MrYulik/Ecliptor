@@ -2,6 +2,8 @@
 
 #include "InventorySystem.h"
 #include "ItemData.h"
+#include "Engine/World.h"
+#include "Kismet/GameplayStatics.h"
 
 void AWorldItem::Interact_Implementation(AActor* Interactor)
 {
@@ -21,6 +23,7 @@ void AWorldItem::Interact_Implementation(AActor* Interactor)
 	if (Inventory->AddItem(ItemID, Quantity))
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Picked up %s x%d"), *ItemID.ToString(), Quantity);
+		UGameplayStatics::PlaySoundAtLocation(GetWorld(), PickupSound, GetActorLocation());
 		Destroy();
 	}
 	else
