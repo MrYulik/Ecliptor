@@ -4,9 +4,12 @@
 
 #include "CoreMinimal.h"
 #include "InventoryEntry.h"
+#include "ItemData.h"
 #include "Components/ActorComponent.h"
 #include "Engine/DataTable.h"
 #include "InventorySystem.generated.h"
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnInventoryChanged);
 
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
@@ -29,10 +32,25 @@ public:
 	UFUNCTION(BlueprintPure, Category="Inventory")
 	int32 GetItemQuantity(FName ItemID) const;
 	
+	UFUNCTION(BlueprintPure, Category="Inventory")
+	int32 GetSlotCount() const { return MaxSlots; }
+	
+	UFUNCTION(BlueprintPure, Category="Inventory")
+	bool GetSlot(int32 Index, FInventoryEntry& OutEntry) const;
+	
+	UFUNCTION(BlueprintPure, Category="Inventory")
+	bool GetItemData(FName ItemID, FItemData& OutData) const;
+	
+	UPROPERTY(BlueprintAssignable, Category="Inventory")
+	FOnInventoryChanged OnInventoryChanged;
+	
 protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Inventory")
 	TObjectPtr<UDataTable> ItemDatabase;
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Inventory")
 	TArray<FInventoryEntry> Items;
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Inventory")
+	int32 MaxSlots = 4;
 };

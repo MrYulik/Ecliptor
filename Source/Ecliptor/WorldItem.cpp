@@ -5,8 +5,6 @@
 
 void AWorldItem::Interact_Implementation(AActor* Interactor)
 {
-	UE_LOG(LogTemp, Error, TEXT("Test"));
-	
 	if (!IsValid(Interactor))
 	{
 		return;
@@ -61,5 +59,6 @@ FText AWorldItem::GetInteractionText_Implementation() const
 
 bool AWorldItem::CanInteract_Implementation(AActor* Interactor) const
 {
-	return false;
+	UInventorySystem* Inventory = Interactor->FindComponentByClass<UInventorySystem>();
+	return IsValid(Inventory);
 }
