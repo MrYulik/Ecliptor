@@ -19,6 +19,10 @@ public:
 	virtual FText GetInteractionText_Implementation() const override;
 	virtual bool CanInteract_Implementation(AActor* Interactor) const override;
 	
+	
+	UFUNCTION(BlueprintCallable, Category="Item")
+	void SetupDroppedItem(FName InItemID, int32 InQuantity);
+	
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Item")
 	FName ItemID;

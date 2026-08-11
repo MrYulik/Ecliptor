@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "InventoryEntry.h"
-#include "ItemData.h"
+#include "Inventory/ItemData.h"
 #include "Components/ActorComponent.h"
 #include "Engine/DataTable.h"
 #include "InventorySystem.generated.h"
@@ -43,6 +43,12 @@ public:
 	
 	UPROPERTY(BlueprintAssignable, Category="Inventory")
 	FOnInventoryChanged OnInventoryChanged;
+	
+	UFUNCTION(BLueprintCallable, Category="Inventory")
+	bool DropItem(FName ItemID, int32 Quantity, AActor* Dropper);
+	
+	UFUNCTION(BlueprintCallable, Category="Inventory")
+	bool UseItem(FName ItemID);
 	
 protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Inventory")

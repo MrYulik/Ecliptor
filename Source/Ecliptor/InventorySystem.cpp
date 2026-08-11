@@ -3,7 +3,11 @@
 
 #include "InventorySystem.h"
 
-#include "ItemData.h"
+#include "WorldItem.h"
+#include "Engine/World.h"
+#include "GameFramework/Actor.h"
+#include "Inventory/ItemUseAction.h"
+#include "Inventory/ItemUseInterface.h"
 
 UInventorySystem::UInventorySystem()
 {
@@ -80,7 +84,32 @@ bool UInventorySystem::AddItem(FName ItemID, int32 Quantity)
 
 bool UInventorySystem::RemoveItem(FName ItemID, int32 Quantity)
 {
-	return true;
+	if (ItemID.IsNone() || Quantity <= 0)
+	{
+		return false;
+	}
+	
+	for (int32 i = 0; i < Items.Num(); i++)
+	{
+		if (Items[i].ItemID != ItemID)
+		{
+			continue;
+		}
+		
+		if (Items[i].Quantity > Quantity)
+		{
+			Items[i].Quantity -= Quantity;
+		}
+		else
+		{
+			Items.RemoveAt(i);
+		}
+		
+		OnInventoryChanged.Broadcast();
+		return true;
+	}
+	
+	return false;
 }
 
 bool UInventorySystem::HasItem(FName ItemID, int32 Quantity) const
@@ -120,4 +149,85 @@ bool UInventorySystem::GetItemData(FName ItemID, FItemData& OutData) const
 
 	OutData = *Found;
 	return true;
+}
+
+bool UInventorySystem::DropItem(FName ItemID, int32 Quantity, AActor* Dropper)
+{
+	if (!IsValid(Dropper) || ItemID.IsNone() || Quantity <= 0)
+	{
+		return false;
+	}
+	
+	FItemData ItemData;
+	if (!GetItemData(ItemID, ItemData) || !ItemData.WorldObject)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("DropItem: no WorldObject for '%s"), *ItemID.ToString());
+		return false;
+	}
+	
+	if (!RemoveItem(ItemID, Quantity))
+	{
+		return false;
+	}
+	
+	UWorld* World = Dropper->GetWorld();
+	if (!World)
+	{
+		return false;
+	}
+	
+	const FVector DropLocation = Dropper->GetActorLocation() + Dropper->GetActorForwardVector() * 150.f + FVector(0.f, 0.f, 50.f);
+	FActorSpawnParameters Params;
+	Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+	AActor* Spawned = World->SpawnActor<AActor>(ItemData.WorldObject, DropLocation, Dropper->GetActorRotation(), Params);
+	if (!Spawned)
+	{
+		AddItem(ItemID, Quantity);
+		return false;
+	}
+	
+	if (AWorldItem* WorldItem = Cast<AWorldItem>(Spawned))
+	{
+		WorldItem->SetupDroppedItem(ItemID, Quantity);
+	}
+	
+	return true;
+}
+
+bool UInventorySystem::UseItem(FName ItemID)
+{
+	if (ItemID.IsNone())
+	{
+		return false;
+	}
+	
+	AActor* Owner = GetOwner();
+	if (!IsValid(Owner))
+	{
+		return false;
+	}
+	
+	FItemData ItemData;
+	if (!GetItemData(ItemID, ItemData))
+	{
+		return false;
+	}
+	
+	if (!ItemData.UseAction)
+	{
+		return false;
+	}
+	
+	UItemUseAction* Action = NewObject<UItemUseAction>(Owner, ItemData.UseAction);
+	if (!IsValid(Action))
+	{
+		return false;
+	}
+	
+	if (!IItemUseInterface::Execute_TryUseItem(Action, Owner, ItemData))
+	{
+		return false;
+	}
+	
+	return RemoveItem(ItemID, 1);
 }

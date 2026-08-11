@@ -1,7 +1,7 @@
 #include "WorldItem.h"
 
 #include "InventorySystem.h"
-#include "ItemData.h"
+#include "Inventory/ItemData.h"
 #include "Engine/World.h"
 #include "Kismet/GameplayStatics.h"
 
@@ -64,4 +64,10 @@ bool AWorldItem::CanInteract_Implementation(AActor* Interactor) const
 {
 	UInventorySystem* Inventory = Interactor->FindComponentByClass<UInventorySystem>();
 	return IsValid(Inventory);
+}
+
+void AWorldItem::SetupDroppedItem(FName InItemID, int32 InQuantity)
+{
+	ItemID = InItemID;
+	Quantity = InQuantity;
 }
