@@ -30,9 +30,6 @@ public:
 	bool HasItem(FName ItemID, int32 Quantity = 1) const;
 	
 	UFUNCTION(BlueprintPure, Category="Inventory")
-	int32 GetItemQuantity(FName ItemID) const;
-	
-	UFUNCTION(BlueprintPure, Category="Inventory")
 	int32 GetSlotCount() const { return MaxSlots; }
 	
 	UFUNCTION(BlueprintPure, Category="Inventory")
@@ -44,17 +41,37 @@ public:
 	UPROPERTY(BlueprintAssignable, Category="Inventory")
 	FOnInventoryChanged OnInventoryChanged;
 	
-	UFUNCTION(BLueprintCallable, Category="Inventory")
+private:
+	UFUNCTION()
 	bool DropItem(FName ItemID, int32 Quantity, AActor* Dropper);
 	
-	UFUNCTION(BlueprintCallable, Category="Inventory")
+	UFUNCTION()
 	bool UseItem(FName ItemID);
 	
 protected:
+	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
+	
+	UFUNCTION()
+	void OnRep_Items();
+	
+	UFUNCTION(Server, Reliable, WithValidation)
+	void Server_UseItem(FName ItemID);
+	
+	UFUNCTION(Server, Reliable, WithValidation)
+	void Server_DropItem(FName ItemID, int32 Quantity);
+	
+	UFUNCTION(BlueprintCallable, Category = "Inventory")
+	void RequestUseItem(FName ItemID);
+	
+	UFUNCTION(BlueprintCallable, Category = "Inventory")
+	void RequestDropItem(FName ItemID, int32 Quantity = 1);
+	
+	//
+	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Inventory")
 	TObjectPtr<UDataTable> ItemDatabase;
 	
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Inventory")
+	UPROPERTY(ReplicatedUsing=OnRep_Items, VisibleAnywhere, BlueprintReadOnly, Category = "Inventory")
 	TArray<FInventoryEntry> Items;
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Inventory")

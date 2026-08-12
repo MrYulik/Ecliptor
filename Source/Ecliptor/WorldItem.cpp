@@ -4,9 +4,21 @@
 #include "Inventory/ItemData.h"
 #include "Engine/World.h"
 #include "Kismet/GameplayStatics.h"
+#include "Net/UnrealNetwork.h"
+
+AWorldItem::AWorldItem()
+{
+	bReplicates = true;
+	AActor::SetReplicateMovement(true);
+}
 
 void AWorldItem::Interact_Implementation(AActor* Interactor)
 {
+	if (!HasAuthority() || !IsValid(Interactor))
+	{
+		return;
+	}
+	
 	if (!IsValid(Interactor))
 	{
 		return;
@@ -70,4 +82,11 @@ void AWorldItem::SetupDroppedItem(FName InItemID, int32 InQuantity)
 {
 	ItemID = InItemID;
 	Quantity = InQuantity;
+}
+
+void AWorldItem::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(AWorldItem, ItemID);
+	DOREPLIFETIME(AWorldItem, Quantity);
 }

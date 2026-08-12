@@ -8,14 +8,22 @@
 #include "GameFramework/Actor.h"
 #include "Inventory/ItemUseAction.h"
 #include "Inventory/ItemUseInterface.h"
+#include "Net/UnrealNetwork.h"
 
 UInventorySystem::UInventorySystem()
 {
 	PrimaryComponentTick.bCanEverTick = false;
+	SetIsReplicatedByDefault(true);
 }
 
 bool UInventorySystem::AddItem(FName ItemID, int32 Quantity)
 {
+	AActor* Actor = GetOwner();
+	if (!IsValid(Actor) || !Actor->HasAuthority())
+	{
+		return false;
+	}
+	
 	if (ItemID.IsNone() || Quantity <= 0)
 	{
 		return false;
@@ -84,6 +92,12 @@ bool UInventorySystem::AddItem(FName ItemID, int32 Quantity)
 
 bool UInventorySystem::RemoveItem(FName ItemID, int32 Quantity)
 {
+	AActor* Actor = GetOwner();
+	if (!IsValid(Actor) || !Actor->HasAuthority())
+	{
+		return false;
+	}
+	
 	if (ItemID.IsNone() || Quantity <= 0)
 	{
 		return false;
@@ -115,11 +129,6 @@ bool UInventorySystem::RemoveItem(FName ItemID, int32 Quantity)
 bool UInventorySystem::HasItem(FName ItemID, int32 Quantity) const
 {
 	return true;
-}
-
-int32 UInventorySystem::GetItemQuantity(FName ItemID) const
-{
-	return 0;
 }
 
 bool UInventorySystem::GetSlot(int32 Index, FInventoryEntry& OutEntry) const
@@ -230,4 +239,65 @@ bool UInventorySystem::UseItem(FName ItemID)
 	}
 	
 	return RemoveItem(ItemID, 1);
+}
+
+// NETWORK
+
+void UInventorySystem::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME_CONDITION(UInventorySystem, Items, COND_OwnerOnly);
+}
+
+void UInventorySystem::OnRep_Items()
+{
+	OnInventoryChanged.Broadcast();
+}
+
+void UInventorySystem::RequestUseItem(FName ItemID)
+{
+	if (AActor* Owner = GetOwner(); IsValid(Owner) && Owner->HasAuthority())
+	{
+		UseItem(ItemID);
+		return;
+	}
+	
+	Server_UseItem(ItemID);
+}
+
+void UInventorySystem::RequestDropItem(FName ItemID, int32 Quantity)
+{
+	AActor* Owner = GetOwner();
+	if (!IsValid(Owner))
+	{
+		return;
+	}
+	
+	if (Owner->HasAuthority())
+	{
+		DropItem(ItemID, Quantity, Owner);
+		return;
+	}
+	
+	Server_DropItem(ItemID, Quantity);
+}
+
+void UInventorySystem::Server_UseItem_Implementation(FName ItemID)
+{
+	UseItem(ItemID);
+}
+
+bool UInventorySystem::Server_UseItem_Validate(FName ItemID)
+{
+	return !ItemID.IsNone();
+}
+
+void UInventorySystem::Server_DropItem_Implementation(FName ItemID, int32 Quantity)
+{
+	DropItem(ItemID, Quantity, GetOwner());
+}
+
+bool UInventorySystem::Server_DropItem_Validate(FName ItemID, int32 Quantity)
+{
+	return !ItemID.IsNone() && Quantity > 0;
 }

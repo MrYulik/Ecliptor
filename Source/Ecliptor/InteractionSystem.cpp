@@ -14,15 +14,8 @@
 UInteractionSystem::UInteractionSystem()
 {
 	PrimaryComponentTick.bCanEverTick = true;
+	SetIsReplicatedByDefault(true);
 }
-
-
-// Called when the game starts
-void UInteractionSystem::BeginPlay()
-{
-	Super::BeginPlay();
-}
-
 
 void UInteractionSystem::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
@@ -99,5 +92,32 @@ void UInteractionSystem::SetOutlineEnabled(AActor* Actor, bool bEnabled) const
 		Mesh->SetRenderCustomDepth(bEnabled);
 		Mesh->SetCustomDepthStencilValue(bEnabled ? OutlineStencilValue : 0);
 	}
+}
+
+void UInteractionSystem::Server_TryInteract_Implementation(AActor* Target)
+{
+	if (!FocusedActor)
+	{
+		return;
+	}
+	
+	AActor* Owner = GetOwner();
+	if (!IsValid(Owner))
+	{
+		return;
+	}
+	
+	if (Owner->HasAuthority())
+	{
+		IInteractionInterface::Execute_Interact(Owner, GetOwner());
+		return;
+	}
+	
+	Server_TryInteract(FocusedActor);
+}
+
+bool UInteractionSystem::Server_TryInteract_Validate(AActor* Target)
+{
+	return true;
 }
 

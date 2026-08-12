@@ -13,13 +13,8 @@ class ECLIPTOR_API UInteractionSystem : public UActorComponent
 	GENERATED_BODY()
 
 public:	
-	// Sets default values for this component's properties
 	UInteractionSystem();
-
-protected:
-	virtual void BeginPlay() override;
-
-public:	
+	
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 	
 	UFUNCTION(BlueprintCallable, Category="Interaction")
@@ -49,4 +44,7 @@ protected:
 	//
 	void UpdateFocusedActor(AActor* NewFocused);
 	void SetOutlineEnabled(AActor* Actor, bool bEnabled) const;
+	
+	UFUNCTION(Server, Reliable, WithValidation)
+	void Server_TryInteract(AActor* Target);
 };
