@@ -17,6 +17,8 @@ class ECLIPTOR_API AWorldItem : public AActor, public IInteractionInterface
 public:
 	AWorldItem();
 	
+	virtual void BeginPlay() override;
+	
 	virtual void Interact_Implementation(AActor* Interactor) override;
 	virtual FText GetInteractionText_Implementation() const override;
 	virtual bool CanInteract_Implementation(AActor* Interactor) const override;

@@ -1,15 +1,36 @@
 #include "WorldItem.h"
 
 #include "InventorySystem.h"
+#include "Components/PrimitiveComponent.h"
 #include "Inventory/ItemData.h"
 #include "Engine/World.h"
+#include "GameFramework/Pawn.h"
 #include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
 
 AWorldItem::AWorldItem()
 {
 	bReplicates = true;
-	AActor::SetReplicateMovement(true);
+	bAlwaysRelevant = true;
+	SetReplicatingMovement(false);
+}
+
+void AWorldItem::BeginPlay()
+{
+	Super::BeginPlay();
+	TArray<UPrimitiveComponent*> Prims;
+	GetComponents<UPrimitiveComponent>(Prims);
+	for (UPrimitiveComponent* Prim : Prims)
+	{
+		if (!Prim)
+		{
+			continue;
+		}
+		Prim->CanCharacterStepUpOn = ECB_No;
+		Prim->SetSimulatePhysics(true);
+		Prim->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
+		Prim->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
+	}
 }
 
 void AWorldItem::Interact_Implementation(AActor* Interactor)
@@ -35,8 +56,18 @@ void AWorldItem::Interact_Implementation(AActor* Interactor)
 	if (Inventory->AddItem(ItemID, Quantity))
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Picked up %s x%d"), *ItemID.ToString(), Quantity);
-		UGameplayStatics::PlaySoundAtLocation(GetWorld(), PickupSound, GetActorLocation());
-		Destroy();
+		
+		if (const APawn* Pawn = Cast<APawn>(Interactor))
+		{
+			if (APlayerController* PC = Cast<APlayerController>(Pawn->GetController()))
+			{
+				PC->ClientPlaySound(PickupSound);
+			}
+		}
+		
+		SetActorEnableCollision(false);
+		SetActorHiddenInGame(true);
+		SetLifeSpan(0.05f);
 	}
 	else
 	{

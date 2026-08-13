@@ -43,7 +43,7 @@ protected:
 	
 	//
 	void UpdateFocusedActor(AActor* NewFocused);
-	void SetOutlineEnabled(AActor* Actor, bool bEnabled) const;
+	void SetOutlineEnabled(const AActor* Actor, bool bEnabled) const;
 	
 	UFUNCTION(Server, Reliable, WithValidation)
 	void Server_TryInteract(AActor* Target);

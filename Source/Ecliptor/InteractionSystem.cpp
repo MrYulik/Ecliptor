@@ -20,15 +20,47 @@ UInteractionSystem::UInteractionSystem()
 void UInteractionSystem::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+	
+	const APawn* Pawn = Cast<APawn>(GetOwner());
+	if (!Pawn || !Pawn->IsLocallyControlled())
+	{
+		return;
+	}
+	
 	UpdateFocusedActor(FindInteractable());
 }
 
 void UInteractionSystem::TryInteract()
 {
-	if (!FocusedActor)
+	if (!IsValid(FocusedActor))
+	{
 		return;
+	}
 		
-		IInteractionInterface::Execute_Interact(FocusedActor, GetOwner());
+	AActor* Owner = GetOwner();
+	if (!IsValid(Owner))
+	{
+		return;
+	}
+	
+	AActor* Target = FocusedActor;
+	
+	if (!Target->Implements<UInteractionInterface>())
+	{
+		return;
+	}
+	
+	SetOutlineEnabled(Target, false);
+	FocusedActor = nullptr;
+	PreviousFocusedActor = nullptr;
+	
+	if (Owner->HasAuthority())
+	{
+		IInteractionInterface::Execute_Interact(Target, Owner);
+		return;
+	}
+
+	Server_TryInteract(Target);
 }
 
 AActor* UInteractionSystem::FindInteractable() const
@@ -78,10 +110,12 @@ void UInteractionSystem::UpdateFocusedActor(AActor* NewFocused)
 	SetOutlineEnabled(FocusedActor, true);
 }
 
-void UInteractionSystem::SetOutlineEnabled(AActor* Actor, bool bEnabled) const
+void UInteractionSystem::SetOutlineEnabled(const AActor* Actor, const bool bEnabled) const
 {
-	if (!Actor)
+	if (!IsValid(Actor))
+	{
 		return;
+	}
 	
 	TArray<UMeshComponent*> Meshes;
 	Actor->GetComponents<UMeshComponent>(Meshes);
@@ -96,7 +130,7 @@ void UInteractionSystem::SetOutlineEnabled(AActor* Actor, bool bEnabled) const
 
 void UInteractionSystem::Server_TryInteract_Implementation(AActor* Target)
 {
-	if (!FocusedActor)
+	if (!IsValid(Target) || !Target->Implements<UInteractionInterface>())
 	{
 		return;
 	}
@@ -107,17 +141,22 @@ void UInteractionSystem::Server_TryInteract_Implementation(AActor* Target)
 		return;
 	}
 	
-	if (Owner->HasAuthority())
+	const float MaxDistance = TraceDistance + 100.f;
+	if (FVector::DistSquared(Owner->GetActorLocation(), Target->GetActorLocation()) > MaxDistance * MaxDistance)
 	{
-		IInteractionInterface::Execute_Interact(Owner, GetOwner());
 		return;
 	}
 	
-	Server_TryInteract(FocusedActor);
+	if (!IInteractionInterface::Execute_CanInteract(Target, Owner))
+	{
+		return;
+	}
+	
+	IInteractionInterface::Execute_Interact(Target, Owner);
 }
 
 bool UInteractionSystem::Server_TryInteract_Validate(AActor* Target)
 {
-	return true;
+	return Target != nullptr;
 }
 
