@@ -41,6 +41,8 @@ public:
 	UPROPERTY(BlueprintAssignable, Category="Inventory")
 	FOnInventoryChanged OnInventoryChanged;
 	
+	bool CanHoldItem(FName ItemID) const;
+	
 private:
 	UFUNCTION()
 	bool DropItem(FName ItemID, int32 Quantity, AActor* Dropper);

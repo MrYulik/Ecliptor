@@ -34,6 +34,9 @@ struct ECLIPTOR_API FItemData : public FTableRowBase
 	TSubclassOf<UItemUseAction> UseAction;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Item")
+	TSubclassOf<AActor> HeldActor;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Item")
 	int32 MaxStack = 1;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Item")

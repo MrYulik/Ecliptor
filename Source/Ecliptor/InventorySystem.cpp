@@ -8,6 +8,7 @@
 #include "GameFramework/Actor.h"
 #include "Inventory/ItemUseAction.h"
 #include "Inventory/ItemUseInterface.h"
+#include "Inventory/Hold/HoldableInterface.h"
 #include "Net/UnrealNetwork.h"
 
 UInventorySystem::UInventorySystem()
@@ -158,6 +159,17 @@ bool UInventorySystem::GetItemData(FName ItemID, FItemData& OutData) const
 
 	OutData = *Found;
 	return true;
+}
+
+bool UInventorySystem::CanHoldItem(FName ItemID) const
+{
+	FItemData Data;
+	if (!GetItemData(ItemID, Data) || !Data.HeldActor)
+	{
+		return false;
+	}
+	
+	return Data.HeldActor->ImplementsInterface(UHoldableInterface::StaticClass());
 }
 
 bool UInventorySystem::DropItem(FName ItemID, int32 Quantity, AActor* Dropper)
